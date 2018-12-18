@@ -127,9 +127,9 @@ const RootQuery = new GraphQLObjectType({
     fields: {
         movies : {
             type: new GraphQLList(movieType),
-            args: {page: {type: GraphQLInt}},
+            args: {term: {type: GraphQLString}},
             resolve : async (parent,args) => {
-                const BASE_URL = `https://yts.am/api/v2/list_movies.json?page=${args.page}`;
+                const BASE_URL = `https://yts.am/api/v2/list_movies.json?query_term=${args.term}`;
                 const res = await fetch(BASE_URL);
                 const json = await res.json();
                 const { movies } = await json.data;
