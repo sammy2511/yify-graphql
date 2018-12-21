@@ -22,6 +22,7 @@
     "graphql": "^14.0.2",
     "lodash": "^4.17.11",
     "node-fetch": "^2.3.0",
-    "nodemon": "^1.18.9"
+    "nodemon": "^1.18.9",
+    "yifysubtitles-api": "^1.0.0"
   }
 }

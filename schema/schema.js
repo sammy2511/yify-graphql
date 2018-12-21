@@ -1,5 +1,8 @@
 const graphql = require('graphql');
 const fetch = require('node-fetch');
+const api = require('yifysubtitles-api');
+
+const language = require('../langmap.json');
 
 
 
@@ -27,6 +30,12 @@ const movieType = new GraphQLObjectType({
          summary : { type: GraphQLString },
          language : { type  : GraphQLString },
          rating : { type : GraphQLString },
+         imdbcode:{ 
+             type : GraphQLString,
+            resolve: async(response) =>{
+                const { imdb_code } = await response;
+                return imdb_code;
+            } },
          torrents: {
              type: new GraphQLList(TorrentType),
              resolve: async (response)=>{
@@ -67,6 +76,26 @@ const movieType = new GraphQLObjectType({
 
                  return cast;
              }
+         },
+
+         subtitles: {
+             type: new GraphQLList(SubType),
+             args: { language: { type: GraphQLString}},
+             resolve: async (parent,args) =>{
+                const selectedLang = language[args.language.toLowerCase()];
+            
+                
+                if(! selectedLang ){
+                    return  new Error('Language not found!!!!');
+                }
+                
+                const data = await api.search({imdbid:`${parent.imdb_code}`});
+                
+                
+                
+                return data[selectedLang];
+             }
+
          }
     })
 })
@@ -118,6 +147,35 @@ const cast = new GraphQLObjectType({
                 return response.imdb_code;
             }
         }
+    })
+})
+
+const SubType = new GraphQLObjectType({
+    name: 'Subtitles',
+    description:'Get Subtitles',
+    fields: () => ({
+        title : { 
+            type : GraphQLString,
+            resolve: async (response)=>{
+                const { release } = await response
+                return release
+            }
+         },
+         language: {
+             type : GraphQLString,
+             resolve: async (response)=>{
+                const { langName } = await response
+                return langName
+             }
+         },
+         url:{
+            type : GraphQLString,
+            resolve: async (response)=>{
+               const { url } = await response
+               return url
+            }
+         }
+        
     })
 })
 
