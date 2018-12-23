@@ -45,54 +45,33 @@ const movieType = new GraphQLObjectType({
          },
          suggestion:{
              type : new GraphQLList(movieType),
-             resolve: async (parent,args) => {
-                const suggestUrl = `https://yts.am/api/v2/movie_suggestions.json?movie_id=${parent.id}`;
-                const response = await fetch(suggestUrl);
-                const json = await response.json();
-                const { movies } = await json.data;
-
-                return movies;
+             resolve: async (parent,args,context) => {
+                return movies = await context.suggestionLoader.load(parent.id);;
              }
          },
 
          parentalGuide:{
              type: new GraphQLList(Guide),
-             resolve: async (parent,args)=>{
-                 const gUrl = `https://yts.am/api/v2/movie_parental_guides.json?movie_id=${parent.id}`;
-                 const response = await fetch(gUrl)
-                 const json = await response.json()
-                 const { parental_guides } = await json.data
-
-                 return parental_guides;
+             resolve: async (parent,args,context)=>{
+                 return parental_guides = await context.PgLoader.load(parent.id);
              }
          },
          cast: {
              type: new GraphQLList(cast),
-             resolve: async (parent,args) => {
-                 const withCast = `https://yts.am/api/v2/movie_details.json?movie_id=${parent.id}&with_cast=true`;
-                 const response = await fetch(withCast);
-                 const json  = await response.json()
-                 const { cast } = await json.data.movie;
-
-                 return cast;
+             resolve: async (parent,args,context) => {
+                 const cast = await context.castLoader.load(parent.id);
+                 return cast
              }
          },
 
          subtitles: {
              type: new GraphQLList(SubType),
              args: { language: { type: GraphQLString}},
-             resolve: async (parent,args) =>{
+             resolve: async (parent,args,context) =>{
                 const selectedLang = language[args.language.toLowerCase()];
-            
-                
-                if(! selectedLang ){
+                if(! selectedLang )
                     return  new Error('Language not found!!!!');
-                }
-                
                 const data = await api.search({imdbid:`${parent.imdb_code}`});
-                
-                
-                
                 return data[selectedLang];
              }
 
@@ -186,26 +165,17 @@ const RootQuery = new GraphQLObjectType({
         movies : {
             type: new GraphQLList(movieType),
             args: {term: {type: GraphQLString}},
-            resolve : async (parent,args) => {
-                const BASE_URL = `https://yts.am/api/v2/list_movies.json?query_term=${args.term}`;
-                const res = await fetch(BASE_URL);
-                const json = await res.json();
-                const { movies } = await json.data;
-                
+            resolve : async (parent,args,context) => {
+                const  movies  = await context.moviesLoader.load(args.term);
                 return movies;
-                
             }
         },
 
         movie: {
             type : movieType,
             args: { id: {type: GraphQLInt} },
-            resolve: async (parent,args)=>{
-                const details_url = `https://yts.am/api/v2/movie_details.json?movie_id=${args.id}`
-                const res = await fetch(details_url);
-                const json = await res.json();
-                const { movie } = await json.data;
-
+            resolve: async (parent,args,context)=>{
+                const movie  = await context.movieLoader.load(args.id);
                 return movie;
             }
         }
